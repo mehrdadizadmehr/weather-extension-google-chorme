@@ -2,85 +2,35 @@
 
 import { useState } from "react";
 import axios from "axios";
-import { WiDaySunny, WiCloud, WiRain, WiStrongWind } from "react-icons/wi";  // Icons for weather conditions
-
-// Define the structure for the weather data
-interface WeatherData {
-  current_weather: {
-    temperature: number;
-    windspeed: number;
-    weathercode: number;
-  };
-}
-
-// Define the structure for the city data
-interface City {
-  id: string;
-  name: string;
-  country: string;
-  latitude: number;
-  longitude: number;
-}
 
 export default function Home() {
   const [city, setCity] = useState("");
-  const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
-  const [weather, setWeather] = useState<WeatherData | null>(null);  // Weather data state
-  const [loading, setLoading] = useState(false);  // Loading state
-  const [error, setError] = useState<string | null>(null);  // Error state
+  const [weather, setWeather] = useState<any | null>(null);  // Weather data state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch city suggestions from the API
-  const fetchCitySuggestions = async (name: string) => {
-    try {
-      const response = await axios.get(`/api/cities?name=${name}`);
-      setCitySuggestions(response.data.data as City[]);  // Cast response to City[]
-    } catch (error) {
-      setError("Failed to fetch city suggestions.");
-    }
-  };
-
-  // Fetch weather data from the API using latitude and longitude
-  const fetchWeather = async (lat: number, lon: number) => {
+  // Function to fetch weather data by city name
+  const fetchWeather = async (cityName: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`/api/weather?lat=${lat}&lon=${lon}`);
-      setWeather(response.data as WeatherData);  // Cast response to WeatherData
-    } catch {
-      setError("Failed to fetch weather data.");
+      const response = await axios.get(`/api/weather?name=${cityName}`);
+      setWeather(response.data);  // Set the weather data in the state
+    } catch (error) {
+      setError("Failed to fetch weather data");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle city input change and fetch suggestions
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    setCity(name);
-    if (name.length > 2) {
-      fetchCitySuggestions(name);
-    } else {
-      setCitySuggestions([]);
-    }
+    setCity(e.target.value);
   };
 
-  // Handle city selection from suggestions
-  const handleCitySelect = (lat: number, lon: number) => {
-    setCitySuggestions([]);
-    fetchWeather(lat, lon);
-  };
-
-  // Function to get the correct weather icon based on the weather code
-  const getWeatherIcon = (weathercode: number) => {
-    switch (weathercode) {
-      case 0:
-        return <WiDaySunny size={50} />;
-      case 1:
-        return <WiCloud size={50} />;
-      case 2:
-        return <WiRain size={50} />;
-      default:
-        return <WiStrongWind size={50} />;
+  const handleCitySubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (city) {
+      fetchWeather(city);
     }
   };
 
@@ -88,40 +38,29 @@ export default function Home() {
     <div className="p-4">
       <h1 className="text-xl mb-4">Weather App</h1>
 
-      {error && <p className="text-red-500">{error}</p>}
-
-      {/* Input field for city search */}
-      <input
-        type="text"
-        value={city}
-        onChange={handleCityChange}
-        placeholder="Enter city"
-        className="border p-2 rounded"
-      />
-
-      {/* City suggestions dropdown */}
-      {citySuggestions.length > 0 && (
-        <ul className="border rounded mt-2 p-2">
-          {citySuggestions.map((city) => (
-            <li
-              key={city.id}
-              className="cursor-pointer hover:bg-gray-200 p-1"
-              onClick={() => handleCitySelect(city.latitude, city.longitude)}
-            >
-              {city.name}, {city.country}
-            </li>
-          ))}
-        </ul>
-      )}
+      <form onSubmit={handleCitySubmit}>
+        <input
+          type="text"
+          value={city}
+          onChange={handleCityChange}
+          placeholder="Enter city"
+          className="border p-2 rounded"
+        />
+        <button type="submit" className="bg-blue-500 text-white p-2 rounded ml-2">
+          Get Weather
+        </button>
+      </form>
 
       {loading && <p>Loading...</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
       {/* Display weather information */}
       {weather && (
-        <div>
-          <p>Temperature: {weather.current_weather.temperature}°C</p>
-          <p>Windspeed: {weather.current_weather.windspeed} km/h</p>
-          <p>Weather: {getWeatherIcon(weather.current_weather.weathercode)}</p>
+        <div className="mt-4">
+          <p>City: {weather.name}</p>
+          <p>Temperature: {weather.main.temp}°C</p>
+          <p>Weather: {weather.weather[0].description}</p>
+          <p>Wind Speed: {weather.wind.speed} m/s</p>
         </div>
       )}
     </div>
