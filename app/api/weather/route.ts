@@ -2,7 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
 // Hardcoded OpenWeatherMap API key
-const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  
+const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  // Replace with your actual API key
+
+// Weather data interface for OpenWeatherMap API response
+interface WeatherData {
+  city: string;
+  temperature: number;
+  description: string;
+  windSpeed: number;
+  humidity: number;
+  pressure: number;
+  visibility: number;
+  sunrise: number;
+  sunset: number;
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -20,7 +33,7 @@ export async function GET(req: NextRequest) {
     const response = await axios.get(url);
 
     // Extract necessary data from the API response
-    const weatherData = {
+    const weatherData: WeatherData = {
       city: response.data.name,
       temperature: response.data.main.temp,
       description: response.data.weather[0].description,
@@ -34,10 +47,10 @@ export async function GET(req: NextRequest) {
 
     // Return the extracted weather data as JSON
     return NextResponse.json(weatherData);
-    
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Log the error
-    console.error('Error fetching weather data:', error.response?.data || error.message);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    console.error('Error fetching weather data:', errorMessage);
     
     // Return an error response
     return NextResponse.json({ error: 'Failed to fetch weather data' }, { status: 500 });
