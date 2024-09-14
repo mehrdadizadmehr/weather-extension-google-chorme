@@ -1,30 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-// Hardcode the OpenWeatherMap API key temporarily
-const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  // Your API key here
+// Hardcoded OpenWeatherMap API key
+const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  // Replace with your API key
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const cityName = searchParams.get('name');
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
 
-  // Check if the city name was provided
-  if (!cityName) {
-    return NextResponse.json({ error: 'City name is required' }, { status: 400 });
+  // Check if latitude and longitude are provided
+  if (!lat || !lon) {
+    return NextResponse.json({ error: 'Latitude and longitude are required' }, { status: 400 });
   }
 
-  // Construct the URL for the OpenWeatherMap API request
-  const url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${OPENWEATHERMAP_KEY}&units=metric`;
-
   try {
-    // Make the request to OpenWeatherMap
+    // OpenWeatherMap API request to fetch detailed weather information
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHERMAP_KEY}&units=metric`;
     const response = await axios.get(url);
-    return NextResponse.json(response.data);  // Return the weather data as JSON
+
+    // Extract necessary data from the API response
+    const weatherData = {
+      city: response.data.name,
+      temperature: response.data.main.temp,
+      description: response.data.weather[0].description,
+      windSpeed: response.data.wind.speed,
+      humidity: response.data.main.humidity,
+      pressure: response.data.main.pressure,
+      visibility: response.data.visibility,
+      sunrise: response.data.sys.sunrise,
+      sunset: response.data.sys.sunset,
+    };
+
+    // Return the extracted weather data as JSON
+    return NextResponse.json(weatherData);
+    
   } catch (error: any) {
-    // Log the error message in the server console
+    // Log the error
     console.error('Error fetching weather data:', error.response?.data || error.message);
     
-    // Return a 500 error if the request to the API fails
+    // Return an error response
     return NextResponse.json({ error: 'Failed to fetch weather data' }, { status: 500 });
   }
 }

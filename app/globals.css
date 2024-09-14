@@ -25,3 +25,87 @@ body {
     text-wrap: balance;
   }
 }
+.suggestion-box {
+  max-height: 200px;  /* Adjust the max height as needed */
+  overflow-y: auto;   /* Enable vertical scrolling */
+}
+/* globals.css */
+body {
+  background-image: url('images/1.jpg');  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 100vh;
+  color: #333333; /* Dark gray for body text */
+}
+
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.2); /* Slightly transparent background */
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px); /* Blur effect to achieve frosted glass */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+input, .suggestion-box, .weather-box {
+  background: rgba(255, 255, 255, 0.3);  /* Light transparent background */
+  color: #333333;  /* Dark gray text for inputs and boxes */
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);  /* Light border for input */
+}
+
+input::placeholder {
+  color: rgba(0, 0, 0, 0.6); /* Slightly lighter placeholder color */
+}
+
+.suggestion-box {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-box li {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  cursor: pointer;
+  color: #555555;  /* Medium gray for city suggestions */
+}
+
+.suggestion-box li:hover {
+  background-color: rgba(0, 0, 0, 0.1);  /* Slight background color change */
+  color: #333333;  /* Dark gray on hover */
+}
+
+.weather-box {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  text-align: center;
+  color: #333333;  /* Dark gray for weather details */
+}
+
+.weather-box p {
+  color: #555555; /* Slightly lighter gray for descriptive text */
+}
+
+.weather-box strong {
+  color: #333333; /* Dark gray for the city name */
+}
+
+h1 {
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);  /* Subtle text shadow for readability */
+  color: #333333;  /* Dark gray for headings */
+}
+
+button {
+  background-color: #1e90ff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #4682b4;
+}
