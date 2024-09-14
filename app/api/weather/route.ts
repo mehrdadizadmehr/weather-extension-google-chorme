@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
 // Hardcoded OpenWeatherMap API key
-const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  // Replace with your API key
+const OPENWEATHERMAP_KEY = '06d0b212574b9c5ba4a563a2abf202f1';  
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

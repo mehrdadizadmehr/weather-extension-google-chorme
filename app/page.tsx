@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
+import { WiDaySunny, WiCloudy, WiRain, WiStrongWind, WiHumidity, WiBarometer, WiSunrise, WiSunset } from "react-icons/wi";  // Import various weather-related icons
 
-// Interface for weather data
+// Interface to define the structure of the weather data we expect from the API
 interface WeatherData {
   city: string;
   temperature: number;
@@ -16,101 +17,148 @@ interface WeatherData {
   sunset: number;
 }
 
-// Convert UNIX timestamp to readable time
+// Helper function to convert a UNIX timestamp into a more readable time format (e.g., for sunrise/sunset)
 const convertTimestampToTime = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 export default function Home() {
-  const [city, setCity] = useState("");
-  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [city, setCity] = useState("");  // State for the city input
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);  // State for city suggestions dropdown
+  const [weather, setWeather] = useState<WeatherData | null>(null);  // State to store fetched weather data
+  const [loading, setLoading] = useState(false);  // Loading state for fetching weather data
+  const [error, setError] = useState<string | null>(null);  // Error state if API request fails
+  const [citySelected, setCitySelected] = useState(false);  // Boolean to track if a city has been selected
 
-  // Fetch city suggestions as the user types
+  // Function to fetch city suggestions as the user types in the input field
   const fetchCitySuggestions = async (name: string) => {
     try {
+      // Fetch city suggestions from our API based on the entered name
       const response = await axios.get(`/api/cities?name=${name}`);
-      setCitySuggestions(response.data.data);  // GeoDB Cities API returns 'data' containing cities
+      setCitySuggestions(response.data.data);  // GeoDB Cities API returns 'data' containing the list of cities
     } catch (error) {
-      setError("Failed to fetch city suggestions.");
+      setError("Failed to fetch city suggestions.");  // Set error state if the request fails
     }
   };
 
-  // Fetch weather data based on selected city's latitude and longitude
-  const fetchWeather = async (lat: number, lon: number) => {
-    setLoading(true);
-    setError(null);
+  // Function to fetch weather data once a city has been selected (using the city's latitude and longitude)
+  const fetchWeather = async (lat: number, lon: number, cityName: string) => {
+    setLoading(true);  // Set loading state to true while fetching
+    setError(null);  // Clear any previous errors
     try {
+      // Fetch weather data using the selected city's lat/lon
       const response = await axios.get(`/api/weather?lat=${lat}&lon=${lon}`);
-      setWeather(response.data);  // Update weather state with API response
+      setWeather(response.data);  // Store the fetched weather data
+      setCity(cityName);  // Update the input field to show the selected city
+      setCitySelected(true);  // Set citySelected to true, which moves the input box to the top
     } catch {
-      setError("Failed to fetch weather data.");
+      setError("Failed to fetch weather data.");  // Set error state if the request fails
     } finally {
-      setLoading(false);
+      setLoading(false);  // Stop the loading state after the fetch completes
     }
   };
 
+  // Event handler for when the user types into the city input field
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setCity(name);
+    setCity(name);  // Update the city input state with the typed value
     if (name.length > 2) {
-      fetchCitySuggestions(name);
+      fetchCitySuggestions(name);  // Fetch city suggestions only if the input length is greater than 2
     } else {
-      setCitySuggestions([]);
+      setCitySuggestions([]);  // Clear suggestions if input length is too short
     }
   };
 
-  // Handle city selection from suggestions
-  const handleCitySelect = (lat: number, lon: number) => {
-    setCitySuggestions([]);
-    fetchWeather(lat, lon);  // Fetch weather using selected city's lat/lon
+  // Handle what happens when the user selects a city from the dropdown
+  const handleCitySelect = (lat: number, lon: number, name: string) => {
+    setCitySuggestions([]);  // Clear suggestions once a city is selected
+    fetchWeather(lat, lon, name);  // Fetch the weather data using the selected city's coordinates
   };
 
   return (
-    <div className="p-8 flex flex-col items-center justify-center min-h-screen glassmorphism">
-      <h1 className="text-3xl mb-8">Weather App</h1>
-
-      <input
-        type="text"
-        value={city}
-        onChange={handleCityChange}
-        placeholder="Enter city"
-        className="border p-2 rounded text-lg w-full max-w-md mb-4 glassmorphism"
-      />
-
-      {/* Show city suggestions */}
-      {citySuggestions.length > 0 && (
-        <ul className="border rounded mt-2 p-2 suggestion-box w-full max-w-md text-lg glassmorphism">
-          {citySuggestions.map((city) => (
-            <li
-              key={city.id}
-              className="cursor-pointer hover:bg-gray-100 p-2"
-              onClick={() => handleCitySelect(city.latitude, city.longitude)}  // Correctly pass lat/lon
-            >
-              {city.name}, {city.country}
-            </li>
-          ))}
-        </ul>
+    <div className="p-8 flex flex-col items-center justify-start min-h-screen glassmorphism">
+      {/* Display the label prompting the user to enter a city, but only if a city hasn't been selected yet */}
+      {!citySelected && (
+        <label className="text-lg mb-2 text-gray-700">Please enter a city:</label>
       )}
 
-      {loading && <p className="text-gray-700 text-lg">Loading...</p>}
-      {error && <p className="text-red-500 text-lg">{error}</p>}
+      {/* Input box for entering the city name, which moves to the top once a city is selected */}
+      <div className={`search-box ${citySelected ? 'move-to-top' : 'centered'}`}>
+        <input
+          type="text"
+          value={city}
+          onChange={handleCityChange}  // Trigger the handleCityChange function on each keystroke
+          placeholder="Enter city"
+          className="border p-2 rounded text-lg w-full max-w-md glassmorphism"
+          disabled={citySelected}  // Disable the input after a city is selected
+        />
 
-      {/* Display weather data */}
+        {/* Display a list of city suggestions based on the input if there are suggestions and a city hasn't been selected yet */}
+        {citySuggestions.length > 0 && !citySelected && (
+          <ul className="border rounded mt-2 p-2 suggestion-box w-full max-w-md text-lg glassmorphism">
+            {citySuggestions.map((city) => (
+              <li
+                key={city.id}
+                className="cursor-pointer hover:bg-gray-100 p-2"
+                onClick={() => handleCitySelect(city.latitude, city.longitude, city.name)}  // Handle city selection and pass lat/lon
+              >
+                {city.name}, {city.country}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {loading && <p className="text-gray-700 text-lg">Loading...</p>}  {/* Show a loading message while fetching data */}
+      {error && <p className="text-red-500 text-lg">{error}</p>}  {/* Show any error messages */}
+
+      {/* Display the selected city and temperature after the user selects a city */}
+      {citySelected && weather && (
+        <div className="text-center mt-10 mb-6">
+          <h2 className="text-4xl font-bold">{weather.city}</h2>
+          <p className="text-2xl">{weather.temperature}°C</p>
+        </div>
+      )}
+
+      {/* Weather data boxes, each displaying different pieces of weather information */}
       {weather && (
-        <div className="mt-8 weather-box glassmorphism">
-          <p className="text-2xl mb-4"><strong>{weather.city}</strong></p>
-          <p className="text-lg">Temperature: {weather.temperature}°C</p>
-          <p className="text-lg">Weather: {weather.description}</p>
-          <p className="text-lg">Wind Speed: {weather.windSpeed} m/s</p>
-          <p className="text-lg">Humidity: {weather.humidity}%</p>
-          <p className="text-lg">Pressure: {weather.pressure} hPa</p>
-          <p className="text-lg">Visibility: {weather.visibility / 1000} km</p>
-          <p className="text-lg">Sunrise: {convertTimestampToTime(weather.sunrise)}</p>
-          <p className="text-lg">Sunset: {convertTimestampToTime(weather.sunset)}</p>
+        <div className="weather-display mt-8 grid grid-cols-2 gap-2 w-full max-w-md">
+          <div className="weather-box">
+            <WiDaySunny size={30} />
+            <p className="title">Weather:</p>
+            <p className="value">{weather.description}</p>
+          </div>
+          <div className="weather-box">
+            <WiStrongWind size={30} />
+            <p className="title">Wind Speed:</p>
+            <p className="value">{weather.windSpeed} m/s</p>
+          </div>
+          <div className="weather-box">
+            <WiHumidity size={30} />
+            <p className="title">Humidity:</p>
+            <p className="value">{weather.humidity}%</p>
+          </div>
+          <div className="weather-box">
+            <WiBarometer size={30} />
+            <p className="title">Pressure:</p>
+            <p className="value">{weather.pressure} hPa</p>
+          </div>
+          <div className="weather-box">
+            <WiCloudy size={30} />
+            <p className="title">Visibility:</p>
+            <p className="value">{weather.visibility / 1000} km</p>
+          </div>
+          <div className="weather-box">
+            <WiSunrise size={30} />
+            <p className="title">Sunrise:</p>
+            <p className="value">{convertTimestampToTime(weather.sunrise)}</p>
+          </div>
+          <div className="weather-box">
+            <WiSunset size={30} />
+            <p className="title">Sunset:</p>
+            <p className="value">{convertTimestampToTime(weather.sunset)}</p>
+          </div>
         </div>
       )}
     </div>
