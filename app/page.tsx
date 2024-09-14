@@ -1,101 +1,114 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import axios from "axios";
+import { WiDaySunny, WiCloud, WiRain, WiStrongWind } from "react-icons/wi";
+
+// Define the weather data structure
+interface WeatherData {
+  current_weather: {
+    temperature: number;
+    windspeed: number;
+    weathercode: number;
+  };
+}
+
+// Define the City interface for the city suggestions
+interface City {
+  id: string;
+  name: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [city, setCity] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<City[]>([]);
+  const [weather, setWeather] = useState<WeatherData | null>(null);  // Use the WeatherData type here
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const fetchCitySuggestions = async (name: string) => {
+    try {
+      const response = await axios.get(`/api/cities?name=${name}`);
+      setCitySuggestions(response.data.data as City[]);
+    } catch (error) {
+      setError("Failed to fetch city suggestions.");
+    }
+  };
+
+  const fetchWeather = async (lat: number, lon: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`/api/weather?lat=${lat}&lon=${lon}`);
+      setWeather(response.data as WeatherData);  // Cast the response to WeatherData
+    } catch {
+      setError("Failed to fetch weather data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
+    setCity(name);
+    if (name.length > 2) {
+      fetchCitySuggestions(name);
+    } else {
+      setCitySuggestions([]);
+    }
+  };
+
+  const handleCitySelect = (lat: number, lon: number) => {
+    setCitySuggestions([]);
+    fetchWeather(lat, lon);
+  };
+
+  return (
+    <div className="p-4">
+      <h1 className="text-xl mb-4">Weather App</h1>
+
+      {error && <p className="text-red-500">{error}</p>}
+
+      <input
+        type="text"
+        value={city}
+        onChange={handleCityChange}
+        placeholder="Enter city"
+        className="border p-2 rounded"
+      />
+      {citySuggestions.length > 0 && (
+        <ul className="border rounded mt-2 p-2">
+          {citySuggestions.map((city) => (
+            <li
+              key={city.id}
+              className="cursor-pointer hover:bg-gray-200 p-1"
+              onClick={() => handleCitySelect(city.latitude, city.longitude)}
+            >
+              {city.name}, {city.country}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {loading && <p>Loading...</p>}
+
+      {weather && (
+        <div>
+          <p>Temperature: {weather.current_weather.temperature}°C</p>
+          <p>Windspeed: {weather.current_weather.windspeed} km/h</p>
+          <p>
+            Weather:{" "}
+            {weather.current_weather.weathercode === 0 ? (
+              <WiDaySunny size={50} />
+            ) : (
+              <WiCloud size={50} />
+            )}
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
     </div>
   );
 }
