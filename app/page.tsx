@@ -39,6 +39,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false); // Loading state for fetching weather data
   const [error, setError] = useState<string | null>(null); // Error state if API request fails
   const [citySelected, setCitySelected] = useState(false); // Boolean to track if a city has been selected
+  const [isSearching, setIsSearching] = useState(false); // State to track if the user is searching for a new city
 
   // Function to fetch city suggestions as the user types in the input field
   const fetchCitySuggestions = async (name: string) => {
@@ -61,6 +62,7 @@ export default function Home() {
       setWeather(response.data); // Store the fetched weather data
       setCity(cityName); // Update the input field to show the selected city
       setCitySelected(true); // Set citySelected to true, which moves the input box to the top
+      setIsSearching(false); // Stop searching when a city is selected
     } catch {
       setError("Failed to fetch weather data."); // Set error state if the request fails
     } finally {
@@ -72,6 +74,7 @@ export default function Home() {
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setCity(name); // Update the city input state with the typed value
+    setIsSearching(true); // Start searching mode when the user types
     if (name.length > 2) {
       fetchCitySuggestions(name); // Fetch city suggestions only if the input length is greater than 2
     } else {
@@ -87,12 +90,10 @@ export default function Home() {
 
   return (
     <div className="p-4 flex flex-col items-center justify-start min-h-screen glassmorphism">
-      {/* Display the label prompting the user to enter a city, but only if a city hasn't been selected yet */}
-      {!citySelected && (
-        <label className="text-lg mb-2 text-gray-700">Please enter a city:</label>
-      )}
+      {/* Display the label prompting the user to enter a city */}
+     {/*  <label className="text-lg mb-2 text-gray-700">Please enter a city:</label> */}
 
-      {/* Input box for entering the city name, which moves to the top once a city is selected */}
+      {/* Input box for entering the city name */}
       <div className={`search-box ${citySelected ? 'move-to-top' : 'centered'}`}>
         <input
           type="text"
@@ -100,12 +101,11 @@ export default function Home() {
           onChange={handleCityChange} // Trigger the handleCityChange function on each keystroke
           placeholder="Enter city"
           className="border p-2 rounded text-lg w-full max-w-md glassmorphism"
-          disabled={citySelected} // Disable the input after a city is selected
         />
 
-        {/* Display a list of city suggestions based on the input if there are suggestions and a city hasn't been selected yet */}
-        {citySuggestions.length > 0 && !citySelected && (
-          <ul className="border rounded mt-2 p-2 suggestion-box w-full max-w-md text-lg glassmorphism">
+        {/* Display a list of city suggestions based on the input if there are suggestions */}
+        {citySuggestions.length > 0 && (
+          <ul className="border rounded mt-2 p-2 suggestion-box w-full max-w-md text-lg glassmorphism z-50 bg-white">
             {citySuggestions.map((city) => (
               <li
                 key={city.id}
@@ -119,55 +119,60 @@ export default function Home() {
         )}
       </div>
 
-      {loading && <p className="text-gray-700 text-lg">Loading...</p>} {/* Show a loading message while fetching data */}
-      {error && <p className="text-red-500 text-lg">{error}</p>} {/* Show any error messages */}
+      {/* Hide the rest of the content when user is searching */}
+      {!isSearching && (
+        <div className="content mt-20">
+          {loading && <p className="text-gray-700 text-lg">Loading...</p>} {/* Show a loading message while fetching data */}
+          {error && <p className="text-red-500 text-lg">{error}</p>} {/* Show any error messages */}
 
-      {/* Display the selected city and temperature after the user selects a city */}
-      {citySelected && weather && (
-        <div className="text-center mt-8 mb-4">
-          <h2 className="text-3xl font-bold">{weather.city}</h2>
-          <p className="text-xl">{weather.temperature}°C</p>
-        </div>
-      )}
+          {/* Display the selected city and temperature after the user selects a city */}
+          {citySelected && weather && (
+            <div className="text-center mt-8 mb-4">
+              <h2 className="text-3xl font-bold">{weather.city}</h2>
+              <p className="text-xl">{weather.temperature}°C</p>
+            </div>
+          )}
 
-      {/* Weather data boxes, each displaying different pieces of weather information */}
-      {weather && (
-        <div className="weather-display mt-6 grid grid-cols-2 gap-1 w-full max-w-sm">
-          <div className="weather-box">
-            <WiDaySunny size={24} />
-            <p className="title">Weather:</p>
-            <p className="value">{weather.description}</p>
-          </div>
-          <div className="weather-box">
-            <WiStrongWind size={24} />
-            <p className="title">Wind Speed:</p>
-            <p className="value">{weather.windSpeed} m/s</p>
-          </div>
-          <div className="weather-box">
-            <WiHumidity size={24} />
-            <p className="title">Humidity:</p>
-            <p className="value">{weather.humidity}%</p>
-          </div>
-          <div className="weather-box">
-            <WiBarometer size={24} />
-            <p className="title">Pressure:</p>
-            <p className="value">{weather.pressure} hPa</p>
-          </div>
-          <div className="weather-box">
-            <WiCloudy size={24} />
-            <p className="title">Visibility:</p>
-            <p className="value">{weather.visibility / 1000} km</p>
-          </div>
-          <div className="weather-box">
-            <WiSunrise size={24} />
-            <p className="title">Sunrise:</p>
-            <p className="value">{convertTimestampToTime(weather.sunrise)}</p>
-          </div>
-          <div className="weather-box">
-            <WiSunset size={24} />
-            <p className="title">Sunset:</p>
-            <p className="value">{convertTimestampToTime(weather.sunset)}</p>
-          </div>
+          {/* Weather data boxes, each displaying different pieces of weather information */}
+          {weather && (
+            <div className="weather-display mt-6 grid grid-cols-2 gap-1 w-full max-w-sm">
+              <div className="weather-box">
+                <WiDaySunny size={24} />
+                <p className="title">Weather:</p>
+                <p className="value">{weather.description}</p>
+              </div>
+              <div className="weather-box">
+                <WiStrongWind size={24} />
+                <p className="title">Wind Speed:</p>
+                <p className="value">{weather.windSpeed} m/s</p>
+              </div>
+              <div className="weather-box">
+                <WiHumidity size={24} />
+                <p className="title">Humidity:</p>
+                <p className="value">{weather.humidity}%</p>
+              </div>
+              <div className="weather-box">
+                <WiBarometer size={24} />
+                <p className="title">Pressure:</p>
+                <p className="value">{weather.pressure} hPa</p>
+              </div>
+              <div className="weather-box">
+                <WiCloudy size={24} />
+                <p className="title">Visibility:</p>
+                <p className="value">{weather.visibility / 1000} km</p>
+              </div>
+              <div className="weather-box">
+                <WiSunrise size={24} />
+                <p className="title">Sunrise:</p>
+                <p className="value">{convertTimestampToTime(weather.sunrise)}</p>
+              </div>
+              <div className="weather-box">
+                <WiSunset size={24} />
+                <p className="title">Sunset:</p>
+                <p className="value">{convertTimestampToTime(weather.sunset)}</p>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
