@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
-import { WiDaySunny, WiCloudy, WiRain, WiStrongWind, WiHumidity, WiBarometer, WiSunrise, WiSunset } from "react-icons/wi";  // Import various weather-related icons
+import { WiDaySunny, WiCloudy, WiStrongWind, WiHumidity, WiBarometer, WiSunrise, WiSunset } from "react-icons/wi"; // Import weather-related icons
 
 // Interface to define the structure of the weather data we expect from the API
 interface WeatherData {
@@ -17,6 +17,15 @@ interface WeatherData {
   sunset: number;
 }
 
+// Interface to define the structure of the city data from GeoDB API
+interface CityData {
+  id: number;
+  name: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+}
+
 // Helper function to convert a UNIX timestamp into a more readable time format (e.g., for sunrise/sunset)
 const convertTimestampToTime = (timestamp: number) => {
   const date = new Date(timestamp * 1000);
@@ -24,56 +33,56 @@ const convertTimestampToTime = (timestamp: number) => {
 };
 
 export default function Home() {
-  const [city, setCity] = useState("");  // State for the city input
-  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);  // State for city suggestions dropdown
-  const [weather, setWeather] = useState<WeatherData | null>(null);  // State to store fetched weather data
-  const [loading, setLoading] = useState(false);  // Loading state for fetching weather data
-  const [error, setError] = useState<string | null>(null);  // Error state if API request fails
-  const [citySelected, setCitySelected] = useState(false);  // Boolean to track if a city has been selected
+  const [city, setCity] = useState(""); // State for the city input
+  const [citySuggestions, setCitySuggestions] = useState<CityData[]>([]); // State for city suggestions dropdown with typed CityData
+  const [weather, setWeather] = useState<WeatherData | null>(null); // State to store fetched weather data
+  const [loading, setLoading] = useState(false); // Loading state for fetching weather data
+  const [error, setError] = useState<string | null>(null); // Error state if API request fails
+  const [citySelected, setCitySelected] = useState(false); // Boolean to track if a city has been selected
 
   // Function to fetch city suggestions as the user types in the input field
   const fetchCitySuggestions = async (name: string) => {
     try {
       // Fetch city suggestions from our API based on the entered name
       const response = await axios.get(`/api/cities?name=${name}`);
-      setCitySuggestions(response.data.data);  // GeoDB Cities API returns 'data' containing the list of cities
+      setCitySuggestions(response.data); // Update citySuggestions with data from API
     } catch (error) {
-      setError("Failed to fetch city suggestions.");  // Set error state if the request fails
+      setError("Failed to fetch city suggestions."); // Set error state if the request fails
     }
   };
 
   // Function to fetch weather data once a city has been selected (using the city's latitude and longitude)
   const fetchWeather = async (lat: number, lon: number, cityName: string) => {
-    setLoading(true);  // Set loading state to true while fetching
-    setError(null);  // Clear any previous errors
+    setLoading(true); // Set loading state to true while fetching
+    setError(null); // Clear any previous errors
     try {
       // Fetch weather data using the selected city's lat/lon
       const response = await axios.get(`/api/weather?lat=${lat}&lon=${lon}`);
-      setWeather(response.data);  // Store the fetched weather data
-      setCity(cityName);  // Update the input field to show the selected city
-      setCitySelected(true);  // Set citySelected to true, which moves the input box to the top
+      setWeather(response.data); // Store the fetched weather data
+      setCity(cityName); // Update the input field to show the selected city
+      setCitySelected(true); // Set citySelected to true, which moves the input box to the top
     } catch {
-      setError("Failed to fetch weather data.");  // Set error state if the request fails
+      setError("Failed to fetch weather data."); // Set error state if the request fails
     } finally {
-      setLoading(false);  // Stop the loading state after the fetch completes
+      setLoading(false); // Stop the loading state after the fetch completes
     }
   };
 
   // Event handler for when the user types into the city input field
   const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    setCity(name);  // Update the city input state with the typed value
+    setCity(name); // Update the city input state with the typed value
     if (name.length > 2) {
-      fetchCitySuggestions(name);  // Fetch city suggestions only if the input length is greater than 2
+      fetchCitySuggestions(name); // Fetch city suggestions only if the input length is greater than 2
     } else {
-      setCitySuggestions([]);  // Clear suggestions if input length is too short
+      setCitySuggestions([]); // Clear suggestions if input length is too short
     }
   };
 
   // Handle what happens when the user selects a city from the dropdown
   const handleCitySelect = (lat: number, lon: number, name: string) => {
-    setCitySuggestions([]);  // Clear suggestions once a city is selected
-    fetchWeather(lat, lon, name);  // Fetch the weather data using the selected city's coordinates
+    setCitySuggestions([]); // Clear suggestions once a city is selected
+    fetchWeather(lat, lon, name); // Fetch the weather data using the selected city's coordinates
   };
 
   return (
@@ -88,10 +97,10 @@ export default function Home() {
         <input
           type="text"
           value={city}
-          onChange={handleCityChange}  // Trigger the handleCityChange function on each keystroke
+          onChange={handleCityChange} // Trigger the handleCityChange function on each keystroke
           placeholder="Enter city"
           className="border p-2 rounded text-lg w-full max-w-md glassmorphism"
-          disabled={citySelected}  // Disable the input after a city is selected
+          disabled={citySelected} // Disable the input after a city is selected
         />
 
         {/* Display a list of city suggestions based on the input if there are suggestions and a city hasn't been selected yet */}
@@ -101,7 +110,7 @@ export default function Home() {
               <li
                 key={city.id}
                 className="cursor-pointer hover:bg-gray-100 p-2"
-                onClick={() => handleCitySelect(city.latitude, city.longitude, city.name)}  // Handle city selection and pass lat/lon
+                onClick={() => handleCitySelect(city.latitude, city.longitude, city.name)} // Handle city selection and pass lat/lon
               >
                 {city.name}, {city.country}
               </li>
@@ -110,8 +119,8 @@ export default function Home() {
         )}
       </div>
 
-      {loading && <p className="text-gray-700 text-lg">Loading...</p>}  {/* Show a loading message while fetching data */}
-      {error && <p className="text-red-500 text-lg">{error}</p>}  {/* Show any error messages */}
+      {loading && <p className="text-gray-700 text-lg">Loading...</p>} {/* Show a loading message while fetching data */}
+      {error && <p className="text-red-500 text-lg">{error}</p>} {/* Show any error messages */}
 
       {/* Display the selected city and temperature after the user selects a city */}
       {citySelected && weather && (
