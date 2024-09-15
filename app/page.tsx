@@ -86,7 +86,7 @@ export default function Home() {
   };
 
   return (
-    <div className="p-8 flex flex-col items-center justify-start min-h-screen glassmorphism">
+    <div className="p-4 flex flex-col items-center justify-start min-h-screen glassmorphism">
       {/* Display the label prompting the user to enter a city, but only if a city hasn't been selected yet */}
       {!citySelected && (
         <label className="text-lg mb-2 text-gray-700">Please enter a city:</label>
@@ -124,47 +124,47 @@ export default function Home() {
 
       {/* Display the selected city and temperature after the user selects a city */}
       {citySelected && weather && (
-        <div className="text-center mt-10 mb-6">
-          <h2 className="text-4xl font-bold">{weather.city}</h2>
-          <p className="text-2xl">{weather.temperature}°C</p>
+        <div className="text-center mt-8 mb-4">
+          <h2 className="text-3xl font-bold">{weather.city}</h2>
+          <p className="text-xl">{weather.temperature}°C</p>
         </div>
       )}
 
       {/* Weather data boxes, each displaying different pieces of weather information */}
       {weather && (
-        <div className="weather-display mt-8 grid grid-cols-2 gap-2 w-full max-w-md">
+        <div className="weather-display mt-6 grid grid-cols-2 gap-1 w-full max-w-sm">
           <div className="weather-box">
-            <WiDaySunny size={30} />
+            <WiDaySunny size={24} />
             <p className="title">Weather:</p>
             <p className="value">{weather.description}</p>
           </div>
           <div className="weather-box">
-            <WiStrongWind size={30} />
+            <WiStrongWind size={24} />
             <p className="title">Wind Speed:</p>
             <p className="value">{weather.windSpeed} m/s</p>
           </div>
           <div className="weather-box">
-            <WiHumidity size={30} />
+            <WiHumidity size={24} />
             <p className="title">Humidity:</p>
             <p className="value">{weather.humidity}%</p>
           </div>
           <div className="weather-box">
-            <WiBarometer size={30} />
+            <WiBarometer size={24} />
             <p className="title">Pressure:</p>
             <p className="value">{weather.pressure} hPa</p>
           </div>
           <div className="weather-box">
-            <WiCloudy size={30} />
+            <WiCloudy size={24} />
             <p className="title">Visibility:</p>
             <p className="value">{weather.visibility / 1000} km</p>
           </div>
           <div className="weather-box">
-            <WiSunrise size={30} />
+            <WiSunrise size={24} />
             <p className="title">Sunrise:</p>
             <p className="value">{convertTimestampToTime(weather.sunrise)}</p>
           </div>
           <div className="weather-box">
-            <WiSunset size={30} />
+            <WiSunset size={24} />
             <p className="title">Sunset:</p>
             <p className="value">{convertTimestampToTime(weather.sunset)}</p>
           </div>
